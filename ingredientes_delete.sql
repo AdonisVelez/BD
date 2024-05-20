@@ -1,0 +1,8 @@
+
+    DELIMITER $$
+    CREATE PROCEDURE ingredientes_delete(IN p_ID_INGREDIENTES INT)
+    BEGIN
+        DELETE FROM ingredientes WHERE ID_INGREDIENTES = p_ID_INGREDIENTES;
+    END$$
+    DELIMITER ;
+    
