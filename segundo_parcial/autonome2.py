@@ -30,7 +30,7 @@ def crear_funcion_trigger(cursor, tabla):
     funcion_insert_sql = f"""
     CREATE OR REPLACE TRIGGER audit_{tabla}_after_insert
     AFTER INSERT ON {tabla}
-    FOR EACH ROW
+    FOR EACH ROW 
     BEGIN
         INSERT INTO auditoria (nombre_tabla, usuario_db, accion, descripcion_cambios)
         VALUES ('{tabla}', USER(), 'INSERT', JSON_OBJECT({insert_values}));
