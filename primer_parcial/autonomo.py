@@ -630,9 +630,10 @@ def opcion11(cursor):
         columnas = obtener_columnas(cursor, tabla_seleccionada_nombre)
         id_column = next((col[0] for col in columnas if 'id' in col[0].lower()), None)
         generar_procedimientos_crud(cursor, tabla_seleccionada_nombre, columnas, id_column)
-
+    
     input("Presione Enter para regresar al menú principal...")
     limpiar_pantalla()
+    
 
 def main():
     try:
