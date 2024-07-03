@@ -1,0 +1,32 @@
+
+    DELIMITER $$
+    CREATE PROCEDURE categoria_plato_insert(IN p_ID_CATEGORIA_PLATO int(11), IN p_NOMBRE_CATEGORIA varchar(50))
+    BEGIN
+        INSERT INTO categoria_plato (ID_CATEGORIA_PLATO, NOMBRE_CATEGORIA) VALUES (p_ID_CATEGORIA_PLATO, p_NOMBRE_CATEGORIA);
+    END$$
+    DELIMITER ;
+    
+
+    DELIMITER $$
+    CREATE PROCEDURE categoria_plato_select()
+    BEGIN
+        SELECT * FROM categoria_plato;
+    END$$
+    DELIMITER ;
+    
+
+    DELIMITER $$
+    CREATE PROCEDURE categoria_platoupdate(IN p_NOMBRE_CATEGORIA varchar(50), IN pID_CATEGORIA_PLATO INT)
+    BEGIN
+        UPDATE categoria_plato SET NOMBRE_CATEGORIA = p_NOMBRE_CATEGORIA WHERE ID_CATEGORIA_PLATO = p_ID_CATEGORIA_PLATO;
+    END$$
+    DELIMITER ;
+    
+
+    DELIMITER $$
+    CREATE PROCEDURE categoria_platodelete(IN pID_CATEGORIA_PLATO INT)
+    BEGIN
+        DELETE FROM categoria_plato WHERE ID_CATEGORIA_PLATO = p_ID_CATEGORIA_PLATO;
+    END$$
+    DELIMITER ;
+    

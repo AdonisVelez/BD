@@ -427,12 +427,6 @@ def opcion9(cursor):
 
 
  #GENERAR PDF
-import os
-from datetime import datetime
-from reportlab.lib.pagesizes import letter
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle
-from reportlab.lib import colors
-
 def obtener_datos_tabla(cursor, tabla, columnas):
     try:
         columnas_sql = ", ".join(columnas)
@@ -548,115 +542,97 @@ def obtener_columnas(cursor, tabla):
     cursor.execute(f"SHOW COLUMNS FROM {tabla}")
     return [row for row in cursor.fetchall()]
 
-def generar_procedimiento_insert(cursor, tabla, columnas):
+def generar_procedimiento_insert(tabla, columnas):
     columnas_insertar = [col for col in columnas if col[1] is None or not col[1].startswith('nextval')]
     cols = ", ".join([col[0] for col in columnas_insertar])
     param_definitions = ", ".join([f"IN p_{col[0]} {col[1]}" for col in columnas_insertar])
     valores = ", ".join([f"p_{col[0]}" for col in columnas_insertar])
-    
-    procedimiento_nombre = f"{tabla}_insert"
+
     proc_insert = f"""
     DELIMITER $$
-    CREATE PROCEDURE {procedimiento_nombre}({param_definitions})
+    CREATE PROCEDURE {tabla}_insert({param_definitions})
     BEGIN
         INSERT INTO {tabla} ({cols}) VALUES ({valores});
     END$$
     DELIMITER ;
     """
-    print(f"Procedimiento INSERT para la tabla {tabla} creado exitosamente.")
-    with open(f"{procedimiento_nombre}.sql", "w") as f:
-        f.write(proc_insert)
+    return proc_insert
 
-def generar_procedimiento_select(cursor, tabla):
-    procedimiento_nombre = f"{tabla}_select"
+def generar_procedimiento_select(tabla):
     proc_select = f"""
     DELIMITER $$
-    CREATE PROCEDURE {procedimiento_nombre}()
+    CREATE PROCEDURE {tabla}_select()
     BEGIN
         SELECT * FROM {tabla};
     END$$
     DELIMITER ;
     """
-    print(f"Procedimiento SELECT para la tabla {tabla} creado exitosamente.")
-    with open(f"{procedimiento_nombre}.sql", "w") as f:
-        f.write(proc_select)
+    return proc_select
 
-def generar_procedimiento_update(cursor, tabla, columnas, id_column):
+def generar_procedimiento_update(tabla, columnas, id_column):
     columnas_update = [col for col in columnas if col[0] != id_column]
     param_definitions = ", ".join([f"IN p_{col[0]} {col[1]}" for col in columnas_update])
     set_values = ", ".join([f"{col[0]} = p_{col[0]}" for col in columnas_update])
-    
-    procedimiento_nombre = f"{tabla}_update"
+
     proc_update = f"""
     DELIMITER $$
-    CREATE PROCEDURE {procedimiento_nombre}({param_definitions}, IN p_{id_column} INT)
+    CREATE PROCEDURE {tabla}update({param_definitions}, IN p{id_column} INT)
     BEGIN
         UPDATE {tabla} SET {set_values} WHERE {id_column} = p_{id_column};
     END$$
     DELIMITER ;
     """
-    print(f"Procedimiento UPDATE para la tabla {tabla} creado exitosamente.")
-    with open(f"{procedimiento_nombre}.sql", "w") as f:
-        f.write(proc_update)
+    return proc_update
 
-def generar_procedimiento_delete(cursor, tabla, id_column):
-    procedimiento_nombre = f"{tabla}_delete"
+def generar_procedimiento_delete(tabla, id_column):
     proc_delete = f"""
     DELIMITER $$
-    CREATE PROCEDURE {procedimiento_nombre}(IN p_{id_column} INT)
+    CREATE PROCEDURE {tabla}delete(IN p{id_column} INT)
     BEGIN
         DELETE FROM {tabla} WHERE {id_column} = p_{id_column};
     END$$
     DELIMITER ;
     """
-    print(f"Procedimiento DELETE para la tabla {tabla} creado exitosamente.")
-    with open(f"{procedimiento_nombre}.sql", "w") as f:
-        f.write(proc_delete)
+    return proc_delete
 
+def generar_procedimientos_crud(cursor, tabla, columnas, id_column):
+    try:
+        procedimientos_dir = r"c:\Users\Adonis Velez\OneDrive\Escritorio\BD\CRUD"
+        if not os.path.exists(procedimientos_dir):
+            os.makedirs(procedimientos_dir)
+
+        with open(os.path.join(procedimientos_dir, f"{tabla}_crud.sql"), "w") as f:
+            f.write(generar_procedimiento_insert(tabla, columnas))
+            f.write("\n")
+            f.write(generar_procedimiento_select(tabla))
+            f.write("\n")
+            f.write(generar_procedimiento_update(tabla, columnas, id_column))
+            f.write("\n")
+            f.write(generar_procedimiento_delete(tabla, id_column))
+        print(f"Procedimientos CRUD para la tabla {tabla} creados exitosamente en la carpeta 'procedimientos'.")
+    except Exception as e:
+        print(f"Error al generar procedimientos CRUD: {e}")
+    
 def opcion11(cursor):
     database = 'restaurante'
     print("Ejecutando Opción 11...")
-    print("Operaciones CRUD:")
-    print("1. Crear (INSERT)")
-    print("2. Leer (SELECT)")
-    print("3. Actualizar (UPDATE)")
-    print("4. Eliminar (DELETE)")
-    
-    seleccion_crud = int(input("Seleccione la operación CRUD que desea realizar: "))
-    
-    if seleccion_crud in range(1, 5):
-        tablas = obtener_detalles_tablas(cursor, database)
-        print("Tablas disponibles:")
-        for i, tabla in enumerate(tablas, 1):
-            print(f"{i}. {tabla}")
-        
-        seleccion_tabla = int(input("Seleccione el número de la tabla: ")) - 1
-        if seleccion_tabla < 0 or seleccion_tabla >= len(tablas):
-            print("Selección de tabla inválida.")
-        else:
-            tabla_seleccionada_nombre = list(tablas.keys())[seleccion_tabla]
-            columnas = obtener_columnas(cursor, tabla_seleccionada_nombre)
-        
-        if 0 <= seleccion_tabla < len(tablas):
-            tabla_seleccionada_nombre = list(tablas.keys())[seleccion_tabla]
-            id_column = next((col[0] for col in columnas if 'id' in col[0].lower()), None)
 
-            if seleccion_crud == 1:
-                generar_procedimiento_insert(cursor, tabla_seleccionada_nombre, columnas)
-            elif seleccion_crud == 2:
-                generar_procedimiento_select(cursor, tabla_seleccionada_nombre)
-            elif seleccion_crud == 3:
-                generar_procedimiento_update(cursor, tabla_seleccionada_nombre, columnas, id_column)
-            elif seleccion_crud == 4:
-                generar_procedimiento_delete(cursor, tabla_seleccionada_nombre, id_column)
-        else:
-            print("Selección de tabla no válida. Por favor, intente de nuevo.")
+    tablas = obtener_detalles_tablas(cursor, database)
+    print("Tablas disponibles:")
+    for i, tabla in enumerate(tablas, 1):
+        print(f"{i}. {tabla}")
+
+    seleccion_tabla = int(input("Seleccione el número de la tabla: ")) - 1
+    if seleccion_tabla < 0 or seleccion_tabla >= len(tablas):
+        print("Selección de tabla inválida.")
     else:
-        print("Selección de operación CRUD no válida. Por favor, intente de nuevo.")
+        tabla_seleccionada_nombre = list(tablas.keys())[seleccion_tabla]
+        columnas = obtener_columnas(cursor, tabla_seleccionada_nombre)
+        id_column = next((col[0] for col in columnas if 'id' in col[0].lower()), None)
+        generar_procedimientos_crud(cursor, tabla_seleccionada_nombre, columnas, id_column)
+
     input("Presione Enter para regresar al menú principal...")
     limpiar_pantalla()
-
-
 
 def main():
     try:
@@ -673,7 +649,6 @@ def main():
         while True:
             mostrar_menu()
             opcion = int(input("Seleccione una opción: "))
-
             if opcion == 1:
                 opcion1(cursor)
             elif opcion == 2:
